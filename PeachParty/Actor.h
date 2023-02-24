@@ -2,8 +2,8 @@
 #define ACTOR_H_
 
 #include "GraphObject.h"
+#include "StudentWorld.h"
 
-class StudentWorld;
 class Actor: public GraphObject {
 public:
     Actor(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* world) : GraphObject(imageID, startX, startY, dir, depth, size){
@@ -54,6 +54,7 @@ public:
                        m_state = 0;
                        setWalkDirection(right);
                        setSpriteDirection(right);
+                       world->updateNumActors();
     };
     virtual void dosomething();
     void changeState();
