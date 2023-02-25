@@ -8,13 +8,12 @@
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 class Actor;
+class Player;
 class StudentWorld : public GameWorld {
 public:
     StudentWorld(std::string assetPath);
     ~StudentWorld(){
-        for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); ++it) {
-            delete *it;
-        }
+
     }
     void updateNumActors(){
         m_numActors++;
@@ -22,10 +21,17 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    Board getBoard() const{
+        return bd;
+    }
 
 private:
     std::list<Actor*> actorList;
     int m_numActors = 0;
+    int m_bankMoney;
+    Player* m_peach;
+    Player* m_yoshi;
+    Board bd;
     
 };
 
