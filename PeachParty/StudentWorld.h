@@ -13,21 +13,24 @@ class StudentWorld : public GameWorld {
 public:
     StudentWorld(std::string assetPath);
     ~StudentWorld(){
-
-    }
-    void updateNumActors(){
-        m_numActors++;
-    }
+//        cleanUp();
+    };
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    Board getBoard() const{
+    Board getBoard() {
         return bd;
+    }
+    Player* getPeach(){
+        return m_peach;
+    }
+    Player* getYoshi(){
+        return m_yoshi;
     }
 
 private:
     std::list<Actor*> actorList;
-    int m_numActors = 0;
+//    int m_numActors = 0;
     int m_bankMoney;
     Player* m_peach;
     Player* m_yoshi;

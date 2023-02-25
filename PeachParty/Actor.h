@@ -11,27 +11,27 @@ public:
     };
     ~Actor(){};
     virtual void doSomething() = 0;
-    int getSpriteDirection(){
+    int getSpriteDirection() const{
         return getDirection();
     };
     void setSpriteDirection(int dir){
         setDirection(dir);
     }
-    StudentWorld* getWorld(){
+    StudentWorld* getWorld() const{
         return m_world;
     }
-    void setDead(){
-        m_active = 0;
-    }
     void setActive(){
-        m_active = 1;
+        m_active = true;
     }
-    int isActive(){
+    void setDead(){
+        m_active = false;
+    }
+    bool isActive() const{
         return m_active;
     }
 private:
     StudentWorld* m_world;
-    int m_active = 1;
+    bool m_active = true;
 
 };
 
@@ -43,8 +43,8 @@ public:
         m_ticks_to_move = 0;
     };
     ~MovingActor(){};
-
-    int getWalkDir(){
+    virtual void doSomething() = 0;
+    int getWalkDir() const{
         return m_walkDir;
     }
     void setWalkDir(int dir){
@@ -56,11 +56,11 @@ public:
     void decrementTicks(){
         m_ticks_to_move -= 1;
     }
-    int numTicks(){
+    int numTicks() const{
         return m_ticks_to_move;
     }
     bool canMoveForward(int dir);
-    bool isAligned();
+    bool isAligned() const;
 private:
     int m_walkDir;
     int m_ticks_to_move;
@@ -71,10 +71,12 @@ public:
     Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world)
                    : MovingActor(imageID, startX, startY, world){
                        m_playerNumber = playerNumber;
+                       m_stars = 0;
+                       m_coins = 0;
+                       m_vortex = false;
                        m_isWalking = false;
                        setWalkDir(right);
                        setSpriteDirection(right);
-                       world->updateNumActors();
     }
     ~Player(){}
     virtual void doSomething();
@@ -86,7 +88,7 @@ public:
         m_stars += value;
     }
     int getStars(){
-        return m_coins;
+        return m_stars;
     }
     
     void updateCoins(int value){
@@ -99,8 +101,9 @@ public:
 private:
     int m_playerNumber;
     bool m_isWalking;
-    int m_stars = 0;
-    int m_coins = 0;
+    int m_stars;
+    int m_coins;
+    bool m_vortex;
 };
 
 class Baddie: public MovingActor{
@@ -127,6 +130,7 @@ public:
 private:
 };
 
+// Might have to make this another dericed class
 class Vortex: public MovingActor { // or some subclass of Actor
 public:
     Vortex(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){};
@@ -137,17 +141,47 @@ private:
 
 class Square: public Actor{
 public:
-    Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){};
+    Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){
+        m_IsPeachNew = true;
+        m_IsYoshiNew = true;
+    };
     ~Square(){};
-    virtual void doSomething() { return;}
+    bool isPeachNew(){
+        return m_IsPeachNew;
+    }
+    bool isYoshiNew(){
+        return m_IsYoshiNew;
+    }
+    void setIsPeachNewTrue(){
+        m_IsPeachNew = true;
+    }
+    void setIsPeachNewFalse(){
+        m_IsPeachNew = false;
+    }
+    void setIsYoshiNewTrue(){
+        m_IsYoshiNew = true;
+    }
+    void setIsYoshiNewFalse(){
+        m_IsYoshiNew = false;
+    }
+    virtual void doSomething() = 0;
+private:
+    bool m_IsPeachNew;
+    bool m_IsYoshiNew;
 };
 
 class CoinSquare: public Square {// or some subclass of Actor
 public:
-    CoinSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
+    CoinSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins): Square(imageID, startX, startY, world){
+        m_numCoinsModified = numCoins;
+    };
     ~CoinSquare(){};
-    virtual void doSomething() { return;}
+    virtual void doSomething();
+    int numCoinsModified(){
+        return m_numCoinsModified;
+    }
 private:
+    int m_numCoinsModified;
 };
 
 class StarSquare: public Square {// or some subclass of Actor

@@ -18,7 +18,8 @@ StudentWorld::StudentWorld(string assetPath)
 
 int StudentWorld::init()
 {
-    startCountdownTimer(30);  // this placeholder causes timeout after 5 seconds
+    startCountdownTimer(30
+                        );  // this placeholder causes timeout after 5 seconds
     string board_file = assetPath() + "board0" + to_string(getBoardNumber()) + ".txt";
     Board::LoadResult result = bd.loadBoard(board_file);
     if (result == Board::load_fail_file_not_found) {
@@ -36,23 +37,23 @@ int StudentWorld::init()
                     case Board::empty:
                     break;
                     case Board::boo:
-                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, 3));
                         actorList.push_back(new Boo(IID_BOO,x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
                         break;
                     case Board::bowser:
-                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, 3));
                         actorList.push_back(new Bowser(IID_BOWSER, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
                         break;
                     case Board::player:
-                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, 3));
                         m_peach = new Player(IID_PEACH, 1, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this);
                         m_yoshi = new Player(IID_YOSHI, 2, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this);
                         break;
                     case Board::red_coin_square:
-                        actorList.push_back(new CoinSquare(IID_RED_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new CoinSquare(IID_RED_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, -3));
                         break;
                     case Board::blue_coin_square:
-                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, 3));
                         break;
                     case Board::left_dir_square:
                         actorList.push_back(new DirectionSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 180, this));
