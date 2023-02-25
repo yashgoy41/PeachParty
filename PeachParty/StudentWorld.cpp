@@ -14,12 +14,12 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+    m_numPlayers = 0;
 }
 
 int StudentWorld::init()
 {
-    startCountdownTimer(30
-                        );  // this placeholder causes timeout after 5 seconds
+    startCountdownTimer(10);  // this placeholder causes timeout after 5 seconds
     string board_file = assetPath() + "board0" + to_string(getBoardNumber()) + ".txt";
     Board::LoadResult result = bd.loadBoard(board_file);
     if (result == Board::load_fail_file_not_found) {

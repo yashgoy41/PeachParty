@@ -29,6 +29,7 @@ public:
     bool isActive() const{
         return m_active;
     }
+    bool overlaps(Actor &a);
 private:
     StudentWorld* m_world;
     bool m_active = true;
@@ -75,6 +76,7 @@ public:
                        m_coins = 0;
                        m_vortex = false;
                        m_isWalking = false;
+                       world->addPlayers();
                        setWalkDir(right);
                        setSpriteDirection(right);
     }
@@ -146,23 +148,30 @@ public:
         m_IsYoshiNew = true;
     };
     ~Square(){};
-    bool isPeachNew(){
-        return m_IsPeachNew;
+    bool isPlayerNew(int playerNum){
+        switch (playerNum) {
+            case 1:
+                return m_IsPeachNew;
+                break;
+            case 2:
+                return m_IsYoshiNew;
+                break;
+            default:
+                return false;
+                break;
+        }
     }
-    bool isYoshiNew(){
-        return m_IsYoshiNew;
-    }
-    void setIsPeachNewTrue(){
-        m_IsPeachNew = true;
-    }
-    void setIsPeachNewFalse(){
-        m_IsPeachNew = false;
-    }
-    void setIsYoshiNewTrue(){
-        m_IsYoshiNew = true;
-    }
-    void setIsYoshiNewFalse(){
-        m_IsYoshiNew = false;
+    void setIsPlayerNew(int playerNum, bool val){
+        switch (playerNum) {
+            case 1:
+                m_IsPeachNew = val;
+                break;
+            case 2:
+                m_IsYoshiNew = val;
+                break;
+            default:
+                break;
+        }
     }
     virtual void doSomething() = 0;
 private:

@@ -12,9 +12,7 @@ class Player;
 class StudentWorld : public GameWorld {
 public:
     StudentWorld(std::string assetPath);
-    ~StudentWorld(){
-//        cleanUp();
-    };
+    ~StudentWorld(){};
     virtual int init();
     virtual int move();
     virtual void cleanUp();
@@ -27,10 +25,29 @@ public:
     Player* getYoshi(){
         return m_yoshi;
     }
+    Player* getPlayer(int playerNum){
+        switch (playerNum) {
+            case 1:
+                return m_peach;
+                break;
+            case 2:
+                return m_yoshi;
+                break;
+            default:
+                return nullptr;
+                break;
+        }
+    }
+    void addPlayers(){
+        m_numPlayers++;
+    }
+    int getNumPlayers(){
+        return m_numPlayers;
+    }
 
 private:
     std::list<Actor*> actorList;
-//    int m_numActors = 0;
+    int m_numPlayers;
     int m_bankMoney;
     Player* m_peach;
     Player* m_yoshi;

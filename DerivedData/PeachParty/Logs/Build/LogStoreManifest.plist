@@ -312,6 +312,40 @@
 			<key>uniqueIdentifier</key>
 			<string>1136AFE2-0629-42CE-83E9-73E100131547</string>
 		</dict>
+		<key>14EBF879-9AFF-479E-98CD-56514116E97C</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>14EBF879-9AFF-479E-98CD-56514116E97C.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>PeachParty project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>PeachParty</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build PeachParty</string>
+			<key>timeStartedRecording</key>
+			<real>699059734.01848602</real>
+			<key>timeStoppedRecording</key>
+			<real>699059734.62179005</real>
+			<key>title</key>
+			<string>Build PeachParty</string>
+			<key>uniqueIdentifier</key>
+			<string>14EBF879-9AFF-479E-98CD-56514116E97C</string>
+		</dict>
 		<key>168371E9-A39A-43D5-A8DF-796FA9CBD884</key>
 		<dict>
 			<key>className</key>
@@ -1468,6 +1502,40 @@
 			<key>uniqueIdentifier</key>
 			<string>67E90983-AC67-4639-9FA7-726ABA87B2DF</string>
 		</dict>
+		<key>70D10196-1628-4231-9E26-EB25DB7463DF</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>70D10196-1628-4231-9E26-EB25DB7463DF.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>PeachParty project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>PeachParty</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build PeachParty</string>
+			<key>timeStartedRecording</key>
+			<real>699059781.88156903</real>
+			<key>timeStoppedRecording</key>
+			<real>699059782.45675695</real>
+			<key>title</key>
+			<string>Build PeachParty</string>
+			<key>uniqueIdentifier</key>
+			<string>70D10196-1628-4231-9E26-EB25DB7463DF</string>
+		</dict>
 		<key>7124E7E7-BFE7-494E-93AA-1E9D2A8A765E</key>
 		<dict>
 			<key>className</key>
@@ -2419,6 +2487,40 @@
 			<string>Build PeachParty</string>
 			<key>uniqueIdentifier</key>
 			<string>A56A6539-6C29-432C-B97A-C9B2DE22762B</string>
+		</dict>
+		<key>A6C1FABF-CC3F-4DD9-9CA5-F84FB8332555</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>A6C1FABF-CC3F-4DD9-9CA5-F84FB8332555.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>PeachParty project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>PeachParty</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Build PeachParty</string>
+			<key>timeStartedRecording</key>
+			<real>699059616.08993399</real>
+			<key>timeStoppedRecording</key>
+			<real>699059617.16264796</real>
+			<key>title</key>
+			<string>Build PeachParty</string>
+			<key>uniqueIdentifier</key>
+			<string>A6C1FABF-CC3F-4DD9-9CA5-F84FB8332555</string>
 		</dict>
 		<key>A9D3F504-67DF-43A3-924E-F1405E553145</key>
 		<dict>

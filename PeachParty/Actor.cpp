@@ -2,6 +2,13 @@
 #include "GameConstants.h"
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
+bool Actor::overlaps(Actor &a){
+    if(a.getX()/16 == getX()/16 && a.getY()/16 == getY()/16){
+        return true;
+    }
+    return false;
+}
+
 bool MovingActor::canMoveForward(int dir){
     Board::GridEntry ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16, GraphObject::getY()/16);;
     switch (dir) {
@@ -112,50 +119,28 @@ void CoinSquare::doSomething(){
     if(!isActive()){
         return;
     }
-    Player* peach = getWorld()->getPeach();
-    if(peach->getX()/16 == getX()/16 && peach->getY()/16 == getY()/16 && peach->isWalking() == true){
-        setIsPeachNewTrue();
-        return;
-    }
-    // X & Y coodinates match and Peach landed
-    if (peach->getX()/16 == getX()/16 && peach->getY()/16 == getY()/16 && peach->isWalking() == false){
-        if(isPeachNew()){
-            if(numCoinsModified() > 0){
-                peach->updateCoins(numCoinsModified());
-                getWorld()->playSound(SOUND_GIVE_COIN);
-                setIsPeachNewFalse();
+    for(int i = 1; i < getWorld()->getNumPlayers()+1; i++){
+        Player* player = getWorld()->getPlayer(i);
+        if(overlaps(*player) && player->isWalking() == true){
+            setIsPlayerNew(i, true);
+            return;
+        }
+        if (overlaps(*player) && player->isWalking() == false){
+            if(isPlayerNew(i)){
+                if(numCoinsModified() > 0){
+                    player->updateCoins(numCoinsModified());
+                    getWorld()->playSound(SOUND_GIVE_COIN);
+                    setIsPlayerNew(i, false);
+                }
+                else{
+                    player->updateCoins(numCoinsModified());
+                    getWorld()->playSound(SOUND_TAKE_COIN);
+                    setIsPlayerNew(i, false);
+                }
+                
             }
-            else{
-                peach->updateCoins(numCoinsModified());
-                getWorld()->playSound(SOUND_TAKE_COIN);
-                setIsPeachNewFalse();
-            }
-           
         }
     }
-    // they are moving
-    Player* yoshi = getWorld()->getYoshi();
-    if(yoshi->getX()/16 == getX()/16 && yoshi->getY()/16 == getY()/16 && yoshi->isWalking() == true){
-        setIsYoshiNewTrue();
-        return;
-    }
-    // X & Y coodinates match and yoshi landed
-    if (yoshi->getX()/16 == getX()/16 && yoshi->getY()/16 == getY()/16 && yoshi->isWalking() == false){
-        if(isYoshiNew()){
-            if(numCoinsModified() > 0){
-                yoshi->updateCoins(numCoinsModified());
-                getWorld()->playSound(SOUND_GIVE_COIN);
-                setIsYoshiNewFalse();
-            }
-            else{
-                yoshi->updateCoins(numCoinsModified());
-                getWorld()->playSound(SOUND_TAKE_COIN);
-                setIsYoshiNewFalse();
-            }
-           
-        }
-    }
-    
-    
-    return;
 }
+
+
