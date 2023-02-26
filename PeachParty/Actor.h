@@ -41,6 +41,8 @@ public:
     MovingActor(int imageID, int startX, int startY, StudentWorld* world)
     : Actor(imageID, startX, startY, right, 0, 1.0, world){
         m_walkDir = right;
+        m_justLanded = true;
+        m_hasTeleported = false;
         m_ticks_to_move = 0;
     };
     ~MovingActor(){};
@@ -60,46 +62,45 @@ public:
     int numTicks() const{
         return m_ticks_to_move;
     }
+    bool hasJustLanded(){
+        return m_justLanded;
+    }
+    void setJustLanded(bool val){
+        m_justLanded = val;
+    }
+    bool hasTeleported(){
+        return m_hasTeleported;
+    }
     bool canMoveForward(int dir);
     bool isAligned() const;
+    
 private:
     int m_walkDir;
     int m_ticks_to_move;
+    bool m_justLanded;
+    bool m_hasTeleported;
 };
 
 class Player : public MovingActor {
 public:
-    Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world)
-                   : MovingActor(imageID, startX, startY, world){
-                       m_playerNumber = playerNumber;
-                       m_stars = 0;
-                       m_coins = 0;
-                       m_vortex = false;
-                       m_isWalking = false;
-                       world->addPlayers();
-                       setWalkDir(right);
-                       setSpriteDirection(right);
-    }
+    Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world);
     ~Player(){}
     virtual void doSomething();
     bool isWalking(){
         return m_isWalking;
     }
-    
     void updateStars(int value){
         m_stars += value;
     }
     int getStars(){
         return m_stars;
     }
-    
     void updateCoins(int value){
         m_coins += value;
     }
     int getCoins(){
         return m_coins;
     }
-    
 private:
     int m_playerNumber;
     bool m_isWalking;
@@ -143,40 +144,12 @@ private:
 
 class Square: public Actor{
 public:
-    Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){
-        m_IsPeachNew = true;
-        m_IsYoshiNew = true;
-    };
+    Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){};
     ~Square(){};
-    bool isPlayerNew(int playerNum){
-        switch (playerNum) {
-            case 1:
-                return m_IsPeachNew;
-                break;
-            case 2:
-                return m_IsYoshiNew;
-                break;
-            default:
-                return false;
-                break;
-        }
-    }
-    void setIsPlayerNew(int playerNum, bool val){
-        switch (playerNum) {
-            case 1:
-                m_IsPeachNew = val;
-                break;
-            case 2:
-                m_IsYoshiNew = val;
-                break;
-            default:
-                break;
-        }
-    }
     virtual void doSomething() = 0;
+    virtual void doAction(Player &p) {};
+    void changeFinances(Square &a);
 private:
-    bool m_IsPeachNew;
-    bool m_IsYoshiNew;
 };
 
 class CoinSquare: public Square {// or some subclass of Actor
@@ -186,19 +159,37 @@ public:
     };
     ~CoinSquare(){};
     virtual void doSomething();
-    int numCoinsModified(){
-        return m_numCoinsModified;
-    }
+    virtual void doAction(Player &p){
+        p.updateCoins(m_numCoinsModified);
+        if(m_numCoinsModified > 0){
+            getWorld()->playSound(SOUND_GIVE_COIN);
+        }
+        else{
+            getWorld()->playSound(SOUND_TAKE_COIN);
+        }
+    };
 private:
     int m_numCoinsModified;
 };
 
 class StarSquare: public Square {// or some subclass of Actor
 public:
-    StarSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
+    StarSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins, int numStars): Square(imageID, startX, startY, world){
+        m_numCoinsModified = numCoins;
+        m_numStarsModified = numStars;
+    };
     ~StarSquare(){};
-    virtual void doSomething() { return;}
+    virtual void doSomething();
+    virtual void doAction(Player &p){
+        if(p.getCoins() >= 20){
+            p.updateCoins(m_numCoinsModified);
+            p.updateStars(m_numStarsModified);
+            getWorld()->playSound(SOUND_GIVE_STAR);
+        }
+    }
 private:
+    int m_numCoinsModified;
+    int m_numStarsModified;
 };
 
 class DirectionSquare: public Square {// or some subclass of Actor

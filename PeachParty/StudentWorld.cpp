@@ -19,7 +19,7 @@ StudentWorld::StudentWorld(string assetPath)
 
 int StudentWorld::init()
 {
-    startCountdownTimer(10);  // this placeholder causes timeout after 5 seconds
+    startCountdownTimer(100);  // this placeholder causes timeout after 5 seconds
     string board_file = assetPath() + "board0" + to_string(getBoardNumber()) + ".txt";
     Board::LoadResult result = bd.loadBoard(board_file);
     if (result == Board::load_fail_file_not_found) {
@@ -74,7 +74,7 @@ int StudentWorld::init()
                         actorList.push_back(new BankSquare(IID_BANK_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
                         break;
                     case Board::star_square:
-                        actorList.push_back(new StarSquare(IID_STAR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
+                        actorList.push_back(new StarSquare(IID_STAR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, -20, 1));
                         break;
                 }
             }
@@ -126,7 +126,8 @@ int StudentWorld::move()
     // Delete Dead Actors
     // Update status text
     
-    setGameStatText("Game will end in a few seconds");
+    string status = "Peach Stars: " + to_string(m_peach->getStars()) + " | " + "Peach Coins: " + to_string(m_peach->getCoins()) + " | Yoshi Stars: " + to_string(m_yoshi->getStars()) + " | " + "Yoshi Coins: " + to_string(m_yoshi->getCoins());
+    setGameStatText(status);
     
 	return GWSTATUS_CONTINUE_GAME;
 }

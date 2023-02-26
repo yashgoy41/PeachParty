@@ -10,19 +10,19 @@ bool Actor::overlaps(Actor &a){
 }
 
 bool MovingActor::canMoveForward(int dir){
-    Board::GridEntry ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16, GraphObject::getY()/16);;
+    Board::GridEntry ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16);;
     switch (dir) {
         case right:
-            ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16+1, GraphObject::getY()/16);
+            ge = getWorld()->getBoard().getContentsOf(getX()/16+1, getY()/16);
             break;
         case left:
-            ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16-1, GraphObject::getY()/16);
+            ge = getWorld()->getBoard().getContentsOf(getX()/16-1, getY()/16);
             break;
         case up:
-            ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16, GraphObject::getY()/16+1);
+            ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16+1);
             break;
         case down:
-            ge = getWorld()->getBoard().getContentsOf(GraphObject::getX()/16, GraphObject::getY()/16-1);
+            ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16-1);
             break;
     }
     if(ge == Board::empty){
@@ -38,42 +38,55 @@ bool MovingActor::isAligned() const{
     return false;
 }
 
+Player::Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world)
+: MovingActor(imageID, startX, startY, world){
+    m_playerNumber = playerNumber;
+    m_stars = 0;
+    m_coins = 0;
+    m_vortex = false;
+    m_isWalking = false;
+    world->addPlayers();
+    setWalkDir(right);
+    setSpriteDirection(right);
+}
 void Player::doSomething(){
     if(!isWalking()){
-//        if (isAligned() && !canMoveForward(getDirection())){
-//            int newDir = -1;
-//            while (newDir == -1) {
-//                int randDir = randInt(1,4);
-//                switch (randDir) {
-//                    case 1:
-//                        randDir = right;
-//                        break;
-//                    case 2:
-//                        randDir = up;
-//                        break;
-//                    case 3:
-//                        randDir = left;
-//                        break;
-//                    case 4:
-//                        randDir = down;
-//                        break;
-//                }
-//                if (canMoveForward(randDir)) {
-//                    newDir = randDir;
-//                    if(newDir == left){
-//                        setDirection(left);
-//                    }
-//                    else{
-//                        setDirection(right);
-//                    }
-//                }
-//            }
-//        }
+        if (!canMoveForward(getDirection()) && hasTeleported() == true){
+            int newDir = -1;
+            while (newDir == -1) {
+                int randDir = randInt(1,4);
+                switch (randDir) {
+                    case 1:
+                        randDir = right;
+                        break;
+                    case 2:
+                        randDir = up;
+                        break;
+                    case 3:
+                        randDir = left;
+                        break;
+                    case 4:
+                        randDir = down;
+                        break;
+                }
+                if (canMoveForward(randDir)) {
+                    newDir = randDir;
+                }
+            }
+            if(newDir == left){
+                setDirection(left);
+            }
+            else{
+                setDirection(right);
+            }
+        }
+
         // Use pressed roll key
         if(getWorld()->getAction(m_playerNumber) == ACTION_ROLL){
-            int die_roll = randInt(1, 10);
+            int die_roll = randInt(1, 1);
             setTicks(die_roll * 8);
             m_isWalking = true;
+            setJustLanded(true);
         }
         // User did not press any key
         else
@@ -115,32 +128,27 @@ void Player::doSomething(){
     
 };
 
-void CoinSquare::doSomething(){
-    if(!isActive()){
+void Square::changeFinances(Square &a){
+    if(!a.isActive()){
         return;
     }
     for(int i = 1; i < getWorld()->getNumPlayers()+1; i++){
         Player* player = getWorld()->getPlayer(i);
-        if(overlaps(*player) && player->isWalking() == true){
-            setIsPlayerNew(i, true);
-            return;
-        }
         if (overlaps(*player) && player->isWalking() == false){
-            if(isPlayerNew(i)){
-                if(numCoinsModified() > 0){
-                    player->updateCoins(numCoinsModified());
-                    getWorld()->playSound(SOUND_GIVE_COIN);
-                    setIsPlayerNew(i, false);
-                }
-                else{
-                    player->updateCoins(numCoinsModified());
-                    getWorld()->playSound(SOUND_TAKE_COIN);
-                    setIsPlayerNew(i, false);
-                }
-                
+            if(player->hasJustLanded()){
+                a.doAction(*player);
+                player->setJustLanded(false);
             }
         }
     }
+}
+
+void CoinSquare::doSomething(){
+    changeFinances(*this);
+}
+
+void StarSquare::doSomething(){
+    changeFinances(*this);
 }
 
 
