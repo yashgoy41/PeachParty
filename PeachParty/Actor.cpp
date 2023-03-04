@@ -1,7 +1,7 @@
 #include "Actor.h"
 #include "GameConstants.h"
 
-// Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
+// This is complete overlap but may need to modify for partial overlap
 bool Actor::overlaps(const Actor &other) const{
     if(other.getX() == getX() && other.getY() == getY()){
         return true;
@@ -24,18 +24,30 @@ bool Actor::overlaps(const Actor &other) const{
 }
 
 bool MovingActor::canMoveForward(int dir) const{
-    Board::GridEntry ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16);;
+    Board::GridEntry ge = Board::empty;
     switch (dir) {
         case right:
+            if(getX() == BOARD_WIDTH - 1){
+                ge = Board::empty;
+            }
             ge = getWorld()->getBoard().getContentsOf(getX()/16+1, getY()/16);
             break;
         case left:
+            if(getX() == 0){
+                ge = Board::empty;
+            }
             ge = getWorld()->getBoard().getContentsOf(getX()/16-1, getY()/16);
             break;
         case up:
+            if(getY() == BOARD_HEIGHT - 1){
+                ge = Board::empty;
+            }
             ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16+1);
             break;
         case down:
+            if(getY() == 0){
+                ge = Board::empty;
+            }
             ge = getWorld()->getBoard().getContentsOf(getX()/16, getY()/16-1);
             break;
     }
@@ -64,25 +76,18 @@ Player::Player(int imageID, int playerNumber, int startX, int startY, StudentWor
     setSpriteDirection(right);
 }
 void Player::doSomething(){
+    if(needsToTeleport() == true){
+        teleport(*this);
+        setNeedsToTeleport(false);
+        return;
+    }
     if(!isWalking()){
-        if (!canMoveForward(getDirection()) && hasTeleported() == true){
+        // Player has teleported
+        if (getWalkDir() == -1){
+            std::cerr << "i've teleported and need to change my direction" << std::endl;
             int newDir = -1;
             while (newDir == -1) {
-                int randDir = randInt(1,4);
-                switch (randDir) {
-                    case 1:
-                        randDir = right;
-                        break;
-                    case 2:
-                        randDir = up;
-                        break;
-                    case 3:
-                        randDir = left;
-                        break;
-                    case 4:
-                        randDir = down;
-                        break;
-                }
+                int randDir = 90* randInt(0,3);
                 if (canMoveForward(randDir)) {
                     newDir = randDir;
                 }
@@ -93,11 +98,12 @@ void Player::doSomething(){
             else{
                 setDirection(right);
             }
+            setWalkDir(newDir);
         }
 
         // Use pressed roll key
         if(getWorld()->getAction(m_playerNumber) == ACTION_ROLL){
-            int die_roll = randInt(1, 2);
+            int die_roll = randInt(1, 10);
             setTicks(die_roll * 8);
             m_isWalking = true;
             setJustLanded(true);
@@ -142,6 +148,16 @@ void Player::doSomething(){
     }
 };
 
+void MovingActor::teleport(MovingActor &m){
+    int xcoord = randInt(0, 15);
+    int ycoord = randInt(0, 15);
+    while(getWorld()->getBoard().getContentsOf(xcoord, ycoord) == Board::empty){
+        xcoord = randInt(0, 15);
+        ycoord = randInt(0, 15);
+    }
+    m.moveTo(xcoord*16, ycoord*16);
+    m.setWalkDir(-1);
+}
 void Square::doSomething(Square &a){
     if(!a.isActive()){
         return;
@@ -262,25 +278,30 @@ void BankSquare::doSomething(){
 }
 
 void EventSquare::doAction(Player &p){
-    int option = randInt(1,3);
+    int option = randInt(1,1);
     if(p.isWalking() == false){
         if(p.hasJustLanded()){
             switch(option){
                 case 1:
                     // Teleport
-                    p.timeToTeleport();
+                    p.setNeedsToTeleport(true);
                     getWorld()->playSound(SOUND_PLAYER_TELEPORT);
                     break;
                 case 2:
                     // Swap Position w P2
+                    
                     break;
                 case 3:
                     // Give Vortex
-                    p.giveVortex();
+                    p.setVortex(true);
                     getWorld()->playSound(SOUND_GIVE_VORTEX);
                     break;
             }
         }
         p.setJustLanded(false);
     }
+}
+
+void EventSquare::doSomething(){
+    Square::doSomething(*this);
 }

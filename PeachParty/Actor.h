@@ -42,10 +42,9 @@ public:
     : Actor(imageID, startX, startY, right, 0, 1.0, world){
         m_walkDir = right;
         m_justLanded = true;
-        m_hasTeleported = false;
         m_needsToTeleport = false;
         m_ticks_to_move = 0;
-    };
+    }
     virtual ~MovingActor(){};
     virtual void doSomething() = 0;
     int getWalkDir() const{
@@ -53,7 +52,7 @@ public:
     }
     void setWalkDir(int dir){
         m_walkDir = dir;
-    };
+    }
     void setTicks(int num){
         m_ticks_to_move = num;
     }
@@ -69,12 +68,13 @@ public:
     void setJustLanded(bool val){
         m_justLanded = val;
     }
-    bool hasTeleported() const{
-        return m_hasTeleported;
+    bool needsToTeleport() const {
+        return m_needsToTeleport;
     }
-    void timeToTeleport() {
-        m_needsToTeleport = true;
+    void setNeedsToTeleport(bool val)  {
+        m_needsToTeleport = val;
     }
+    void teleport(MovingActor &m);
     bool canMoveForward(int dir) const;
     bool isAligned() const;
     
@@ -82,7 +82,6 @@ private:
     int m_walkDir;
     int m_ticks_to_move;
     bool m_justLanded;
-    bool m_hasTeleported;
     bool m_needsToTeleport;
 };
 
@@ -111,20 +110,11 @@ public:
     int getCoins() const{
         return m_coins;
     }
-    int getPrevX() const{
-        return m_prevX;
-    }
-    int getPrevY() const{
-        return m_prevY;
-    }
     bool hasVortex() const{
         return m_vortex;
     }
-    void giveVortex() {
-        m_vortex = true;
-    }
-    void useVortex(){
-        m_vortex = false;
+    void setVortex(bool val) {
+        m_vortex = val;
     }
 private:
     int m_playerNumber;
@@ -132,8 +122,6 @@ private:
     int m_stars;
     int m_coins;
     bool m_vortex;
-    int m_prevX; // Previous X position of the player
-    int m_prevY; // Previous Y position of the player
 };
 
 class Baddie: public MovingActor{
@@ -229,7 +217,7 @@ class EventSquare: public Square {// or some subclass of Actor
 public:
     EventSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
     virtual ~EventSquare(){};
-    virtual void doSomething() { return;}
+    virtual void doSomething();
     virtual void doAction(Player &p);
 private:
 };
