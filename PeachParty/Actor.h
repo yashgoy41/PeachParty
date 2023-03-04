@@ -42,7 +42,6 @@ public:
     : Actor(imageID, startX, startY, right, 0, 1.0, world){
         m_walkDir = right;
         m_justLanded = true;
-        m_needsToTeleport = false;
         m_ticks_to_move = 0;
     }
     virtual ~MovingActor(){};
@@ -68,12 +67,6 @@ public:
     void setJustLanded(bool val){
         m_justLanded = val;
     }
-    bool needsToTeleport() const {
-        return m_needsToTeleport;
-    }
-    void setNeedsToTeleport(bool val)  {
-        m_needsToTeleport = val;
-    }
     void teleport(MovingActor &m);
     bool canMoveForward(int dir) const;
     bool isAligned() const;
@@ -82,7 +75,6 @@ private:
     int m_walkDir;
     int m_ticks_to_move;
     bool m_justLanded;
-    bool m_needsToTeleport;
 };
 
 class Player : public MovingActor {
@@ -116,6 +108,7 @@ public:
     void setVortex(bool val) {
         m_vortex = val;
     }
+    void swapWithOtherPlayer();
 private:
     int m_playerNumber;
     bool m_isWalking;
