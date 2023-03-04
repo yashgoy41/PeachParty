@@ -15,6 +15,7 @@ StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
     m_numPlayers = 0;
+    m_totalBankCoins = 50;
 }
 
 int StudentWorld::init()
@@ -56,16 +57,16 @@ int StudentWorld::init()
                         actorList.push_back(new CoinSquare(IID_BLUE_COIN_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this, 3));
                         break;
                     case Board::left_dir_square:
-                        actorList.push_back(new DirectionSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 180, this));
+                        actorList.push_back(new DirectionalSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 180, this));
                         break;
                     case Board::right_dir_square:
-                        actorList.push_back(new DirectionSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 0,this));
+                        actorList.push_back(new DirectionalSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 0,this));
                         break;
                     case Board::up_dir_square:
-                        actorList.push_back(new DirectionSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 90, this));
+                        actorList.push_back(new DirectionalSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 90, this));
                         break;
                     case Board::down_dir_square:
-                        actorList.push_back(new DirectionSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 270, this));
+                        actorList.push_back(new DirectionalSquare(IID_DIR_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, 270, this));
                         break;
                     case Board::event_square:
                         actorList.push_back(new EventSquare(IID_EVENT_SQUARE, x*SPRITE_WIDTH,y*SPRITE_HEIGHT, this));
@@ -120,12 +121,6 @@ int StudentWorld::move()
         }
         
     }
-    for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); it++) {
-        (*it)->doSomething();
-    }
-    // Delete Dead Actors
-    // Update status text
-    
     string status = "Peach Stars: " + to_string(m_peach->getStars()) + " | " + "Peach Coins: " + to_string(m_peach->getCoins()) + " | Yoshi Stars: " + to_string(m_yoshi->getStars()) + " | " + "Yoshi Coins: " + to_string(m_yoshi->getCoins());
     setGameStatText(status);
     

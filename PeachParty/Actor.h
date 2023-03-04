@@ -9,7 +9,7 @@ public:
     Actor(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* world) : GraphObject(imageID, startX, startY, dir, depth, size){
         m_world = world;
     };
-    ~Actor(){};
+    virtual ~Actor(){};
     virtual void doSomething() = 0;
     int getSpriteDirection() const{
         return getDirection();
@@ -29,7 +29,7 @@ public:
     bool isActive() const{
         return m_active;
     }
-    bool overlaps(Actor &a);
+    bool overlaps(const Actor &a) const;
 private:
     StudentWorld* m_world;
     bool m_active = true;
@@ -43,9 +43,10 @@ public:
         m_walkDir = right;
         m_justLanded = true;
         m_hasTeleported = false;
+        m_needsToTeleport = false;
         m_ticks_to_move = 0;
     };
-    ~MovingActor(){};
+    virtual ~MovingActor(){};
     virtual void doSomething() = 0;
     int getWalkDir() const{
         return m_walkDir;
@@ -62,16 +63,19 @@ public:
     int numTicks() const{
         return m_ticks_to_move;
     }
-    bool hasJustLanded(){
+    bool hasJustLanded() const{
         return m_justLanded;
     }
     void setJustLanded(bool val){
         m_justLanded = val;
     }
-    bool hasTeleported(){
+    bool hasTeleported() const{
         return m_hasTeleported;
     }
-    bool canMoveForward(int dir);
+    void timeToTeleport() {
+        m_needsToTeleport = true;
+    }
+    bool canMoveForward(int dir) const;
     bool isAligned() const;
     
 private:
@@ -79,27 +83,48 @@ private:
     int m_ticks_to_move;
     bool m_justLanded;
     bool m_hasTeleported;
+    bool m_needsToTeleport;
 };
 
 class Player : public MovingActor {
 public:
     Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world);
-    ~Player(){}
+    virtual ~Player(){}
     virtual void doSomething();
-    bool isWalking(){
+    bool isWalking() const{
         return m_isWalking;
     }
     void updateStars(int value){
         m_stars += value;
     }
-    int getStars(){
+    int getStars() const{
         return m_stars;
     }
     void updateCoins(int value){
-        m_coins += value;
+        if((m_coins + value) < 0){
+            m_coins = 0;
+        }
+        else{
+            m_coins += value;
+        }
     }
-    int getCoins(){
+    int getCoins() const{
         return m_coins;
+    }
+    int getPrevX() const{
+        return m_prevX;
+    }
+    int getPrevY() const{
+        return m_prevY;
+    }
+    bool hasVortex() const{
+        return m_vortex;
+    }
+    void giveVortex() {
+        m_vortex = true;
+    }
+    void useVortex(){
+        m_vortex = false;
     }
 private:
     int m_playerNumber;
@@ -107,12 +132,14 @@ private:
     int m_stars;
     int m_coins;
     bool m_vortex;
+    int m_prevX; // Previous X position of the player
+    int m_prevY; // Previous Y position of the player
 };
 
 class Baddie: public MovingActor{
 public:
     Baddie(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){}
-    ~Baddie(){}
+    virtual ~Baddie(){}
     virtual void doSomething() { return;}
 private:
 };
@@ -120,7 +147,7 @@ private:
 class Bowser: public Baddie { // or some subclass of Actor
 public:
     Bowser(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
-    ~Bowser(){};
+    virtual ~Bowser(){};
     virtual void doSomething() { return;}
 private:
 };
@@ -128,7 +155,7 @@ private:
 class Boo: public Baddie { // or some subclass of Actor
 public:
     Boo(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
-    ~Boo(){};
+    virtual ~Boo(){};
     virtual void doSomething() { return;}
 private:
 };
@@ -137,7 +164,7 @@ private:
 class Vortex: public MovingActor { // or some subclass of Actor
 public:
     Vortex(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){};
-    ~Vortex(){};
+    virtual ~Vortex(){};
     virtual void doSomething() { return;}
 private:
 };
@@ -145,9 +172,9 @@ private:
 class Square: public Actor{
 public:
     Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){};
-    ~Square(){};
-    virtual void doSomething() = 0;
-    virtual void doAction(Player &p) {};
+    virtual ~Square(){};
+    virtual void doSomething(Square &p);
+    virtual void doAction(Player &p) = 0;
     void changeFinances(Square &a);
 private:
 };
@@ -157,17 +184,9 @@ public:
     CoinSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins): Square(imageID, startX, startY, world){
         m_numCoinsModified = numCoins;
     };
-    ~CoinSquare(){};
+    virtual ~CoinSquare(){};
     virtual void doSomething();
-    virtual void doAction(Player &p){
-        p.updateCoins(m_numCoinsModified);
-        if(m_numCoinsModified > 0){
-            getWorld()->playSound(SOUND_GIVE_COIN);
-        }
-        else{
-            getWorld()->playSound(SOUND_TAKE_COIN);
-        }
-    };
+    virtual void doAction(Player &p);
 private:
     int m_numCoinsModified;
 };
@@ -175,69 +194,52 @@ private:
 class StarSquare: public Square {// or some subclass of Actor
 public:
     StarSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins, int numStars): Square(imageID, startX, startY, world){
-        m_numCoinsModified = numCoins;
-        m_numStarsModified = numStars;
+        m_numCoinsToDeduct = numCoins;
+        m_numStarsToGive = numStars;
     };
-    ~StarSquare(){};
+    virtual ~StarSquare(){};
     virtual void doSomething();
-    virtual void doAction(Player &p){
-        if(p.getCoins() >= 20){
-            p.updateCoins(m_numCoinsModified);
-            p.updateStars(m_numStarsModified);
-            getWorld()->playSound(SOUND_GIVE_STAR);
-        }
-    }
+    virtual void doAction(Player &p);
 private:
-    int m_numCoinsModified;
-    int m_numStarsModified;
+    int m_numCoinsToDeduct;
+    int m_numStarsToGive;
 };
 
-class DirectionSquare: public Square {// or some subclass of Actor
+class DirectionalSquare: public Square {// or some subclass of Actor
 public:
-    DirectionSquare(int imageID, int startX, int startY, int dir, StudentWorld* world): Square(imageID, startX, startY, world){
-        switch (dir) {
-            case right:
-                setDirection(right);
-                break;
-            case left:
-                setDirection(left);
-                break;
-            case up:
-                setDirection(up);
-                break;
-            case down:
-                setDirection(down);
-                break;
-            default:
-                break;
-        }
-    };
-    ~DirectionSquare(){};
-    virtual void doSomething() { return;}
+    DirectionalSquare(int imageID, int startX, int startY, int dir, StudentWorld* world);
+    virtual ~DirectionalSquare(){};
+    virtual void doSomething();
+    virtual void doAction(Player &p);
 private:
+    int m_forceDir;
 };
 
 class BankSquare: public Square {// or some subclass of Actor
 public:
     BankSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
-    ~BankSquare(){};
-    virtual void doSomething() { return;}
+    virtual ~BankSquare(){};
+    virtual void doSomething();
+    virtual void doAction(Player &p);
 private:
+//    int num_
 };
 
 class EventSquare: public Square {// or some subclass of Actor
 public:
     EventSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
-    ~EventSquare(){};
+    virtual ~EventSquare(){};
     virtual void doSomething() { return;}
+    virtual void doAction(Player &p);
 private:
 };
 
 class DropSquare: public Square {// or some subclass of Actor
 public:
     DropSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
-    ~DropSquare(){};
+    virtual ~DropSquare(){};
     virtual void doSomething() { return;}
+    virtual void doAction(Player &p) {return;};
 private:
 };
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp

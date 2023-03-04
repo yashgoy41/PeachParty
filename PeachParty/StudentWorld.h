@@ -16,16 +16,10 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    Board getBoard() {
+    Board getBoard() const{
         return bd;
     }
-    Player* getPeach(){
-        return m_peach;
-    }
-    Player* getYoshi(){
-        return m_yoshi;
-    }
-    Player* getPlayer(int playerNum){
+    Player* getPlayer(int playerNum) const{
         switch (playerNum) {
             case 1:
                 return m_peach;
@@ -41,14 +35,23 @@ public:
     void addPlayers(){
         m_numPlayers++;
     }
-    int getNumPlayers(){
+    int getNumPlayers() const{
         return m_numPlayers;
+    }
+    int getBankCoins() const{
+        return m_totalBankCoins;
+    }
+    void updateBankCoins(int value) {
+        m_totalBankCoins += value;
+    }
+    void resetBankCoins() {
+        m_totalBankCoins = 0;
     }
 
 private:
     std::list<Actor*> actorList;
     int m_numPlayers;
-    int m_bankMoney;
+    int m_totalBankCoins;
     Player* m_peach;
     Player* m_yoshi;
     Board bd;
