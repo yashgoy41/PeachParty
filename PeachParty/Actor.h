@@ -41,6 +41,7 @@ public:
     MovingActor(int imageID, int startX, int startY, StudentWorld* world)
     : Actor(imageID, startX, startY, right, 0, 1.0, world){
         m_walkDir = right;
+        m_isWalking = false;
         m_justLanded = true;
         m_ticks_to_move = 0;
     }
@@ -67,12 +68,19 @@ public:
     void setJustLanded(bool val){
         m_justLanded = val;
     }
+    bool getIsWalking() const{
+        return m_isWalking;
+    }
+    void setIsWalking(bool val) {
+        m_isWalking = val;
+    }
     void teleport(MovingActor &m);
     bool canMoveForward(int dir) const;
     bool isAligned() const;
     
 private:
     int m_walkDir;
+    bool m_isWalking;
     int m_ticks_to_move;
     bool m_justLanded;
 };
@@ -82,9 +90,6 @@ public:
     Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world);
     virtual ~Player(){}
     virtual void doSomething();
-    bool isWalking() const{
-        return m_isWalking;
-    }
     void updateStars(int value){
         m_stars += value;
     }
@@ -99,6 +104,12 @@ public:
             m_coins += value;
         }
     }
+    void resetCoins(){
+        m_coins = 0;
+    }
+    void resetStars(){
+        m_stars = 0;
+    }
     int getCoins() const{
         return m_coins;
     }
@@ -109,27 +120,47 @@ public:
         m_vortex = val;
     }
     void swapWithOtherPlayer();
+    bool wasHurtByBaddie(){
+        return m_hurtByBaddie;
+    }
+    void setHurtByBaddie(bool val){
+        m_hurtByBaddie = val;
+    }
 private:
     int m_playerNumber;
-    bool m_isWalking;
     int m_stars;
     int m_coins;
     bool m_vortex;
+    bool m_hurtByBaddie;
 };
 
 class Baddie: public MovingActor{
 public:
-    Baddie(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){}
+    Baddie(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){
+        m_travelDist = 0;
+        m_pauseCtr = 180;
+    }
     virtual ~Baddie(){}
     virtual void doSomething() { return;}
+    int getPauseCtr(){
+        return m_pauseCtr;
+    }
+    void resetPauseCtr(){
+        m_pauseCtr = 180;
+    }
+    void decrementPauseCtr(){
+        m_pauseCtr--;
+    }
 private:
+    int m_travelDist;
+    int m_pauseCtr;
 };
 
 class Bowser: public Baddie { // or some subclass of Actor
 public:
     Bowser(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
     virtual ~Bowser(){};
-    virtual void doSomething() { return;}
+    virtual void doSomething();
 private:
 };
 
