@@ -90,8 +90,12 @@ int StudentWorld::move()
     m_peach->doSomething();
     m_yoshi->doSomething();
     for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); it++) {
-        if((*it)->isActive()){
+        if((*it)->isActive() == true){
             (*it)->doSomething();
+        }
+        if((*it)->isActive() == false){
+            delete *it;
+            it = actorList.erase(it);
         }
     }
     
@@ -133,4 +137,20 @@ void StudentWorld::cleanUp(){
     }
     delete m_peach;
     delete m_yoshi;
+}
+
+void StudentWorld::addDroppingSquare(int x, int y){
+    for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); it++) {
+        if((*it)->isActive()){
+            if((*it)->isASquare()){
+                std::cerr<< "X: "<< (*it)->getX() << " Y: "<<(*it)->getY() << std::endl;
+                if((*it)->getX() == x && (*it)->getY() == y){
+                    (*it)->setDead();
+                    actorList.push_back(new DroppingSquare(IID_DROPPING_SQUARE, x,y,this));
+                    return;
+                }
+            }
+        }
+    }
+    return;
 }

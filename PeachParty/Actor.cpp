@@ -66,6 +66,27 @@ bool MovingActor::isAligned() const{
     return false;
 }
 
+bool MovingActor::atAFork() const{
+    int dirs = 0;
+    Board::GridEntry ge = getWorld()->getBoard().getContentsOf(getX() / BOARD_WIDTH, getY() / BOARD_HEIGHT);
+    // If you are on top of a directional square, it is not a fork.
+    if (ge == Board::up_dir_square || ge == Board::down_dir_square || ge == Board::left_dir_square || ge == Board::right_dir_square){
+        return false;
+    }
+    if(getWorld()->getBoard().getContentsOf(getX()/16+1, getY()/16) != Board::empty)
+        dirs++;
+    if(getWorld()->getBoard().getContentsOf(getX()/16-1, getY()/16) != Board::empty)
+        dirs++;
+    if(getWorld()->getBoard().getContentsOf(getX()/16, getY()/16+1) != Board::empty)
+        dirs++;
+    if(getWorld()->getBoard().getContentsOf(getX()/16, getY()/16-1) != Board::empty)
+        dirs++;
+    if(dirs >= 3){
+        return true;
+    }
+    return false;
+}
+
 void MovingActor::teleport(MovingActor &m){
     int xcoord = randInt(0, 15);
     int ycoord = randInt(0, 15);
@@ -75,6 +96,51 @@ void MovingActor::teleport(MovingActor &m){
     }
     m.moveTo(xcoord*16, ycoord*16);
     m.setWalkDir(-1);
+}
+
+void MovingActor::pickRandDir() {
+    int newDir = -1;
+    while (newDir == -1) {
+        int randDir = 90 * randInt(0,3);
+        if (canMoveForward(randDir)) {
+            newDir = randDir;
+        }
+    }
+    if(newDir == left){
+        setDirection(left);
+    }
+    else{
+        setDirection(right);
+    }
+    setWalkDir(newDir);
+}
+
+void MovingActor::atTurningPoint(MovingActor &object) {
+    if (object.isAligned() && object.canMoveForward(object.getWalkDir()) == false){
+        //change direction
+        if (object.getWalkDir() == right || object.getWalkDir() == left) {
+            // check if up is available
+            if (object.canMoveForward(up)) {
+                object.setWalkDir(up);
+                object.setDirection(right);
+            }
+            else if (object.canMoveForward(down)) {
+                object.setWalkDir(down);
+                object.setDirection(right);
+            }
+        }
+        else if (object.getWalkDir() == up || object.getWalkDir() == down) {
+            // check if right is available
+            if (object.canMoveForward(right)) {
+                object.setWalkDir(right);
+                object.setDirection(right);
+            }
+            else if (object.canMoveForward(left)) {
+                object.setWalkDir(left);
+                object.setDirection(left);
+            }
+        }
+    }
 }
 
 /* =========== PLAYER =========== */
@@ -93,20 +159,7 @@ void Player::doSomething(){
     if(getIsWalking() == false){
         // Player has teleported
         if (getWalkDir() == -1){
-            int newDir = -1;
-            while (newDir == -1) {
-                int randDir = 90 * randInt(0,3);
-                if (canMoveForward(randDir)) {
-                    newDir = randDir;
-                }
-            }
-            if(newDir == left){
-                setDirection(left);
-            }
-            else{
-                setDirection(right);
-            }
-            setWalkDir(newDir);
+            pickRandDir();
         }
         // Use pressed roll key
         if(getWorld()->getAction(m_playerNumber) == ACTION_ROLL){
@@ -122,31 +175,7 @@ void Player::doSomething(){
         }
     }
     if(getIsWalking() == true){
-        if (isAligned() && canMoveForward(getWalkDir()) == false){
-            //change direction
-            if (getWalkDir() == right || getWalkDir() == left) {
-                   // check if up is available
-                   if (canMoveForward(up)) {
-                       setWalkDir(up);
-                       setDirection(right);
-                   }
-                   else if (canMoveForward(down)) {
-                       setWalkDir(down);
-                       setDirection(right);
-                   }
-            }
-            else if (getWalkDir() == up || getWalkDir() == down) {
-                   // check if right is available
-                   if (canMoveForward(right)) {
-                       setWalkDir(right);
-                       setDirection(right);
-                   }
-                   else if (canMoveForward(left)) {
-                       setWalkDir(left);
-                       setDirection(left);
-                   }
-            }
-        }
+        atTurningPoint(*this);
         moveAtAngle(getWalkDir(), 2);
         decrementTicks();
         if(numTicks() == 0){
@@ -168,6 +197,7 @@ void Player::swapWithOtherPlayer(){
     t_x = getX(); t_y = getY(); t_numTicks = numTicks();
     t_walkDir = getWalkDir(); t_spriteDir = getDirection();
     bool t_justLanded = hasJustLanded(); t_isWalking = getIsWalking();
+    
     // Copy from other player into current player
     setTicks(other->numTicks());
     setWalkDir(other->getWalkDir());
@@ -175,6 +205,7 @@ void Player::swapWithOtherPlayer(){
     setIsWalking(other->getIsWalking());
     setJustLanded(other->hasJustLanded());
     moveTo(other->getX(), other->getY());
+    
     // Copy into other player from temp
     other->setTicks(t_numTicks);
     other->setWalkDir(t_walkDir);
@@ -184,84 +215,91 @@ void Player::swapWithOtherPlayer(){
     other->moveTo(t_x, t_y);
 }
 
-/* =========== BOWSER =========== */
-
-void Bowser::doSomething(){
-    if(getIsWalking() == false){
+/* =========== BADDIE =========== */
+void Baddie::doSomething(Baddie &b){
+    if(b.getIsWalking() == false){
         for(int i = 1; i < getWorld()->getNumPlayers()+1; i++){
             Player* player = getWorld()->getPlayer(i);
-            if (overlaps(*player) && player->getIsWalking() == false){
-                if(player->wasHurtByBaddie() == false){
-                    int event = randInt(0, 1);
-                    if(event == 0){
-                        std::cerr<< "player landed on BOWSER and got HURT" << std::endl;
-                        player->resetCoins();
-                        player->resetStars();
-                        getWorld()->playSound(SOUND_BOWSER_ACTIVATE);
-                    }
-                    player->setHurtByBaddie(true);
-                }
+            if (b.overlaps(*player) && player->getIsWalking() == false){
+                b.hurtPlayer(*player);
             }
-            decrementPauseCtr();
-            if(getPauseCtr() == 0){
-                int sq_to_move = randInt(1,10);
-                setTicks(sq_to_move * 8);
-                int newDir = -1;
-                while (newDir == -1) {
-                    int randDir = 90 * randInt(0,3);
-                    if (canMoveForward(randDir)) {
-                        newDir = randDir;
-                    }
-                }
-                if(newDir == left){
-                    setDirection(left);
-                }
-                else{
-                    setDirection(right);
-                }
-                setWalkDir(newDir);
-                setIsWalking(true);
-            }
+        }
+        b.decrementPauseCtr();
+        if(b.getPauseCtr() == 0){
+            int sq_to_move = randInt(1,10);
+            b.setTicks(sq_to_move * 8);
+            b.pickRandDir();
+            b.setIsWalking(true);
         }
     }
-    if(getIsWalking() == true){
-        // TODO: IMPLEMENT ALGORITHM FOR FORK
-        
-        // Turning Point
-        if (isAligned() && canMoveForward(getWalkDir()) == false){
-            //change direction
-            if (getWalkDir() == right || getWalkDir() == left) {
-                   // check if up is available
-                   if (canMoveForward(up)) {
-                       setWalkDir(up);
-                       setDirection(right);
-                   }
-                   else if (canMoveForward(down)) {
-                       setWalkDir(down);
-                       setDirection(right);
-                   }
-            }
-            else if (getWalkDir() == up || getWalkDir() == down) {
-                   // check if right is available
-                   if (canMoveForward(right)) {
-                       setWalkDir(right);
-                       setDirection(right);
-                   }
-                   else if (canMoveForward(left)) {
-                       setWalkDir(left);
-                       setDirection(left);
-                   }
-            }
+    if(b.getIsWalking() == true){
+        // Fork Point
+        if (b.isAligned() && b.atAFork()){
+            b.pickRandDir();
         }
-        moveAtAngle(getWalkDir(), 2);
-        decrementTicks();
-        if(numTicks() == 0){
-            setIsWalking(false);
-            resetPauseCtr();
-            // Insert dropping square;
+        // Turning Point
+        b.atTurningPoint(*this);
+        b.moveAtAngle(getWalkDir(), 2);
+        b.decrementTicks();
+        if(b.numTicks() == 0){
+            b.setIsWalking(false);
+            b.resetPauseCtr();
+            b.specialMove();
         }
     }
 }
+
+/* =========== BOWSER =========== */
+void Bowser::hurtPlayer(Player &player){
+    if(player.wasHurtByBaddie() == false){
+        int event = randInt(0, 1);
+        if(event == 0){
+            std::cerr<< "Player landed on Baddie and got hurt" << std::endl;
+            player.resetCoins();
+            player.resetStars();
+            getWorld()->playSound(SOUND_BOWSER_ACTIVATE);
+        }
+        player.setHurtByBaddie(true);
+    }
+}
+
+void Bowser::specialMove(){
+    int chance = randInt(1, 1);
+    if(chance == 1){
+        getWorld()->addDroppingSquare(getX(), getY());
+        getWorld()->playSound(SOUND_DROPPING_SQUARE_CREATED);
+    }
+}
+void Bowser::doSomething(){
+    Baddie::doSomething(*this);
+}
+
+
+/* =========== BOO =========== */
+void Boo::hurtPlayer(Player &player){
+    if(player.wasHurtByBaddie() == false){
+        int event = randInt(0, 1);
+        if(event == 0){
+            Player* other = player.getOtherPlayer();
+            int tmp = player.getCoins();
+            player.setCoins(other->getCoins());
+            other->setCoins(tmp);
+        }
+        if(event == 1){
+            Player* other = player.getOtherPlayer();
+            int tmp = player.getStars();
+            player.setStars(other->getStars());
+            other->setStars(tmp);
+        }
+        getWorld()->playSound(SOUND_BOO_ACTIVATE);
+        player.setHurtByBaddie(true);
+    }
+}
+
+void Boo::doSomething(){
+    Baddie::doSomething(*this);
+}
+
 /* =========== SQUARE =========== */
 void Square::doSomething(Square &a){
     if(!a.isActive()){
@@ -415,3 +453,28 @@ void EventSquare::doAction(Player &p){
 void EventSquare::doSomething(){
     Square::doSomething(*this);
 }
+
+/* =========== DROPPING SQUARE =========== */
+void DroppingSquare::doAction(Player &p){
+    if(p.getIsWalking() == false){
+        if(p.hasJustLanded()){
+            int event  = randInt(0, 1);
+            if(event == 0){
+                p.updateCoins(-10);
+            }
+            if(event == 1){
+                if(p.getStars() > 0){
+                    p.updateStars(-1);
+                }
+            }
+            getWorld()->playSound(SOUND_DROPPING_SQUARE_ACTIVATE);
+        }
+        p.setJustLanded(false);
+    }
+}
+
+void DroppingSquare::doSomething(){
+    Square::doSomething(*this);
+}
+
+

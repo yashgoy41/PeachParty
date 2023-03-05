@@ -47,6 +47,7 @@ public:
     void resetBankCoins() {
         m_totalBankCoins = 0;
     }
+    void addDroppingSquare(int x, int y);
 
 private:
     std::list<Actor*> actorList;
