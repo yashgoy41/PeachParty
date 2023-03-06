@@ -3,6 +3,10 @@
 
 // This is complete overlap but may need to modify for partial overlap
 /* =========== ACTOR =========== */
+Actor::Actor(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* world) : GraphObject(imageID, startX, startY, dir, depth, size){
+    m_world = world;
+    m_active = true;
+};
 bool Actor::overlaps(const Actor &other) const{
     if(other.getX() == getX() && other.getY() == getY()){
         return true;
@@ -27,6 +31,14 @@ bool Actor::partiallyOverlaps(const Actor &other) const {
 }
 
 /* =========== MOVING ACTOR =========== */
+MovingActor::MovingActor(int imageID, int startX, int startY, StudentWorld* world)
+: Actor(imageID, startX, startY, right, 0, 1.0, world){
+    m_walkDir = right;
+    m_isWalking = false;
+    m_justLanded = true;
+    m_ticks_to_move = 0;
+}
+
 bool MovingActor::canMoveForward(int dir) const{
     Board::GridEntry ge = Board::empty;
     switch (dir) {
@@ -155,8 +167,25 @@ Player::Player(int imageID, int playerNumber, int startX, int startY, StudentWor
     m_hurtByBaddie = false;
     world->addPlayers();
     setWalkDir(right);
-    setSpriteDirection(right);
+    setDirection(right);
 }
+void Player::updateCoins(int value){
+    if((m_coins + value) < 0){
+        m_coins = 0;
+    }
+    else{
+        m_coins += value;
+    }
+}
+Player* Player::getOtherPlayer() const{
+    if (m_playerNumber == 1){
+        return getWorld()->getPlayer(2);
+    }
+    else {
+        return getWorld()->getPlayer(1);
+    }
+}
+
 void Player::doSomething(){
     if(getIsWalking() == false){
         // Player has teleported
@@ -164,15 +193,16 @@ void Player::doSomething(){
             pickRandDir();
         }
         // Use pressed roll key
-        if(getWorld()->getAction(m_playerNumber) == ACTION_ROLL){
-            int die_roll = randInt(1,1);
+        int action = getWorld()->getAction(m_playerNumber);
+        if(action == ACTION_ROLL){
+            int die_roll = randInt(1,10);
             setTicks(die_roll * 8);
             setIsWalking(true);
             setJustLanded(true);
             setHurtByBaddie(false);
         }
-        if(getWorld()->getAction(m_playerNumber) == ACTION_FIRE && m_vortex == true){
-            std::cerr << "firing vortex" << std::endl;
+        // Pressed fire
+        if(action == ACTION_FIRE && m_vortex == true){
             createVortex(getWalkDir());
             getWorld()->playSound(SOUND_PLAYER_FIRE);
             m_vortex = false;
@@ -183,6 +213,15 @@ void Player::doSomething(){
         }
     }
     if(getIsWalking() == true){
+        // Fork
+        if(atAFork() && isAligned()){
+            int action  = getWorld()->getAction(m_playerNumber);
+            bool validOption = setForkDirection(action);
+            if (validOption == false){
+                return;
+            }
+        }
+        // Turning Point
         atTurningPoint(*this);
         moveAtAngle(getWalkDir(), 2);
         decrementTicks();
@@ -191,7 +230,48 @@ void Player::doSomething(){
         }
     }
 };
-
+bool Player::setForkDirection(int action){
+    switch (action) {
+        case ACTION_NONE:
+            return false;
+            break;
+        case ACTION_LEFT:
+            if(canMoveForward(left)){
+                setWalkDir(left);
+                setDirection(left);
+                return true;
+            }
+            return false;
+            break;
+        case ACTION_RIGHT:
+            if(canMoveForward(right)){
+                setWalkDir(right);
+                setDirection(right);
+                return true;
+            }
+            return false;
+            break;
+        case ACTION_UP:
+            if(canMoveForward(up)){
+                setWalkDir(up);
+                setDirection(right);
+                return true;
+            }
+            return false;
+            break;
+        case ACTION_DOWN:
+            if(canMoveForward(down)){
+                setWalkDir(down);
+                setDirection(right);
+                return true;
+            }
+            return false;
+            break;
+        default:
+            return false;
+            break;
+    }
+}
 void Player::swapWithOtherPlayer(){
     Player* other;
     if(m_playerNumber == 1){
@@ -241,9 +321,15 @@ void Player::createVortex(int dir){
         default:
             break;
     }
-    getWorld()->getActorList().push_back(new Vortex(IID_VORTEX, x, y, getWorld()));
+    getWorld()->createNewVortex(x, y, dir);
+    
 }
 /* =========== BADDIE =========== */
+Baddie::Baddie(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){
+    m_travelDist = 0;
+    m_pauseCtr = 180;
+    m_gotHitByVortex = false;
+}
 void Baddie::doSomething(Baddie &b){
     if(m_gotHitByVortex == true){
         teleport(*this);
@@ -282,11 +368,11 @@ void Baddie::doSomething(Baddie &b){
 }
 
 /* =========== BOWSER =========== */
+Bowser::Bowser(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
 void Bowser::hurtPlayer(Player &player){
     if(player.wasHurtByBaddie() == false){
         int event = randInt(0, 1);
         if(event == 0){
-            std::cerr<< "Player landed on Baddie and got hurt" << std::endl;
             player.resetCoins();
             player.resetStars();
             getWorld()->playSound(SOUND_BOWSER_ACTIVATE);
@@ -308,6 +394,7 @@ void Bowser::doSomething(){
 
 
 /* =========== BOO =========== */
+Boo::Boo(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
 void Boo::hurtPlayer(Player &player){
     if(player.wasHurtByBaddie() == false){
         int event = randInt(0, 1);
@@ -333,12 +420,16 @@ void Boo::doSomething(){
 }
 
 /* =========== VORTEX =========== */
+Vortex::Vortex(int imageID, int startX, int startY, StudentWorld* world, int dir): MovingActor(imageID, startX, startY, world){
+    setWalkDir(dir);
+};
+
 void Vortex::doSomething(){
     if(!isActive()){
         return;
     }
     moveAtAngle(getWalkDir(), 2);
-    if(getX() > VIEW_WIDTH || getX() < 0 || getY() > BOARD_HEIGHT || getY() < 0){
+    if(getX() > VIEW_WIDTH || getX() < 0 || getY() > VIEW_HEIGHT || getY() < 0){
         setDead();
     }
     if(getWorld()->hitWithVortex(getX(), getY()) == true){
@@ -347,6 +438,8 @@ void Vortex::doSomething(){
     }
 }
 /* =========== SQUARE =========== */
+Square::Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){
+};
 void Square::doSomething(Square &a){
     if(!a.isActive()){
         return;
@@ -360,6 +453,9 @@ void Square::doSomething(Square &a){
 }
 
 /* =========== COIN SQUARE =========== */
+CoinSquare::CoinSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins): Square(imageID, startX, startY, world){
+    m_numCoinsModified = numCoins;
+};
 void CoinSquare::doAction(Player &p){
     if(p.getIsWalking() == false){
         if(p.hasJustLanded()){
@@ -379,6 +475,10 @@ void CoinSquare::doSomething(){
 }
 
 /* =========== STAR SQUARE =========== */
+StarSquare::StarSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins, int numStars): Square(imageID, startX, startY, world){
+    m_numCoinsToDeduct = numCoins;
+    m_numStarsToGive = numStars;
+};
 void StarSquare::doAction(Player &p){
     // Landed on
     if(p.getIsWalking() == false){
@@ -439,6 +539,8 @@ void DirectionalSquare::doSomething(){
 }
 
 /* =========== BANK SQUARE =========== */
+BankSquare::BankSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
+
 void BankSquare::doAction(Player &p){
     // Landed on
     if(p.getIsWalking() == false){
@@ -470,8 +572,10 @@ void BankSquare::doSomething(){
 }
 
 /* =========== EVENT SQUARE =========== */
+EventSquare::EventSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
+
 void EventSquare::doAction(Player &p){
-    int option = randInt(3,3);
+    int option = randInt(1,3);
     if(p.getIsWalking() == false){
         if(p.hasJustLanded()){
             switch(option){
@@ -500,6 +604,7 @@ void EventSquare::doSomething(){
 }
 
 /* =========== DROPPING SQUARE =========== */
+DroppingSquare::DroppingSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
 void DroppingSquare::doAction(Player &p){
     if(p.getIsWalking() == false){
         if(p.hasJustLanded()){

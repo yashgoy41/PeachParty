@@ -16,42 +16,16 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-    Board getBoard() const{
-        return bd;
-    }
-    Player* getPlayer(int playerNum) const{
-        switch (playerNum) {
-            case 1:
-                return m_peach;
-                break;
-            case 2:
-                return m_yoshi;
-                break;
-            default:
-                return nullptr;
-                break;
-        }
-    }
-    void addPlayers(){
-        m_numPlayers++;
-    }
-    int getNumPlayers() const{
-        return m_numPlayers;
-    }
-    int getBankCoins() const{
-        return m_totalBankCoins;
-    }
-    void updateBankCoins(int value) {
-        m_totalBankCoins += value;
-    }
-    void resetBankCoins() {
-        m_totalBankCoins = 0;
-    }
+    Board getBoard() const{return bd;}
+    Player* getPlayer(int playerNum) const;
+    void addPlayers(){m_numPlayers++;}
+    int getNumPlayers() const{return m_numPlayers;}
+    int getBankCoins() const{return m_totalBankCoins;}
+    void updateBankCoins(int value) {m_totalBankCoins += value;}
+    void resetBankCoins() {m_totalBankCoins = 0;}
     void addDroppingSquare(int x, int y);
     bool hitWithVortex(int x, int y);
-    std::list<Actor*> getActorList(){
-        return actorList;
-    }
+    void createNewVortex(int x, int y, int dir);
 
 private:
     std::list<Actor*> actorList;

@@ -125,7 +125,7 @@ int StudentWorld::move()
         }
         
     }
-    string status = "Peach Stars: " + to_string(m_peach->getStars()) + " | " + "Peach Coins: " + to_string(m_peach->getCoins()) + " | Yoshi Stars: " + to_string(m_yoshi->getStars()) + " | " + "Yoshi Coins: " + to_string(m_yoshi->getCoins());
+    string status = "P1 Roll: " + to_string(m_peach->numTicks()/8) + " Stars: " + to_string(m_peach->getStars()) + " $$: " + to_string(m_peach->getCoins()) + " | Time: " + to_string(timeRemaining()) + " | Bank: " + to_string(m_totalBankCoins) + " | " + "P1 Roll: " + to_string(m_yoshi->numTicks()/8) + " Stars: " + to_string(m_yoshi->getStars()) + " $$: " + to_string(m_yoshi->getCoins());
     setGameStatText(status);
     
 	return GWSTATUS_CONTINUE_GAME;
@@ -143,7 +143,6 @@ void StudentWorld::addDroppingSquare(int x, int y){
     for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); it++) {
         if((*it)->isActive()){
             if((*it)->isASquare()){
-                std::cerr<< "X: "<< (*it)->getX() << " Y: "<<(*it)->getY() << std::endl;
                 if((*it)->getX() == x && (*it)->getY() == y){
                     (*it)->setDead();
                     actorList.push_back(new DroppingSquare(IID_DROPPING_SQUARE, x,y,this));
@@ -167,4 +166,24 @@ bool StudentWorld::hitWithVortex(int x, int y){
         }
     }
     return false;
+}
+
+void StudentWorld::createNewVortex(int x, int y, int dir){
+    actorList.push_back(new Vortex(IID_VORTEX, x, y, this, dir));
+    std::cerr << "vortex created" << std::endl;
+}
+    
+
+Player* StudentWorld::getPlayer(int playerNum) const{
+    switch (playerNum) {
+        case 1:
+            return m_peach;
+            break;
+        case 2:
+            return m_yoshi;
+            break;
+        default:
+            return nullptr;
+            break;
+}
 }
