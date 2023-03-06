@@ -8,20 +8,22 @@ bool Actor::overlaps(const Actor &other) const{
         return true;
     }
     return false;
-//    int thisLeft = getX();1
-//        int thisRight = thisLeft + SPRITE_WIDTH - 1;
-//        int thisBottom = getY();
-//        int thisTop = thisBottom + SPRITE_HEIGHT - 1;
-//
-//        // Get the bounding box of the other actor
-//        int otherLeft = other.getX();
-//        int otherRight = otherLeft + SPRITE_WIDTH - 1;
-//        int otherBottom = other.getY();
-//        int otherTop = otherBottom + SPRITE_HEIGHT - 1;
-//
-//        // Check if the bounding boxes overlap
-//        return (thisLeft <= otherRight && thisRight >= otherLeft &&
-//                thisBottom <= otherTop && thisTop >= otherBottom);
+}
+bool Actor::partiallyOverlaps(const Actor &other) const {
+    int thisLeft = getX();
+    int thisRight = thisLeft + SPRITE_WIDTH - 1;
+    int thisBottom = getY();
+    int thisTop = thisBottom + SPRITE_HEIGHT - 1;
+
+    // Get the bounding box of the other actor
+    int otherLeft = other.getX();
+    int otherRight = otherLeft + SPRITE_WIDTH - 1;
+    int otherBottom = other.getY();
+    int otherTop = otherBottom + SPRITE_HEIGHT - 1;
+
+    // Check if the bounding boxes overlap
+    return (thisLeft < otherRight && thisRight > otherLeft &&
+                thisBottom < otherTop && thisTop > otherBottom);
 }
 
 /* =========== MOVING ACTOR =========== */
@@ -149,7 +151,7 @@ Player::Player(int imageID, int playerNumber, int startX, int startY, StudentWor
     m_playerNumber = playerNumber;
     m_stars = 0;
     m_coins = 0;
-    m_vortex = false;
+    m_vortex = true;
     m_hurtByBaddie = false;
     world->addPlayers();
     setWalkDir(right);
@@ -168,6 +170,12 @@ void Player::doSomething(){
             setIsWalking(true);
             setJustLanded(true);
             setHurtByBaddie(false);
+        }
+        if(getWorld()->getAction(m_playerNumber) == ACTION_FIRE && m_vortex == true){
+            std::cerr << "firing vortex" << std::endl;
+            createVortex(getWalkDir());
+            getWorld()->playSound(SOUND_PLAYER_FIRE);
+            m_vortex = false;
         }
         // User did not press any key
         else{
@@ -214,9 +222,33 @@ void Player::swapWithOtherPlayer(){
     setJustLanded(t_justLanded);
     other->moveTo(t_x, t_y);
 }
-
+void Player::createVortex(int dir){
+    int x = getX();
+    int y = getY();
+    switch (dir) {
+        case right:
+            x += 16;
+            break;
+        case left:
+            x -= 16;
+            break;
+        case up:
+            y += 16;
+            break;
+        case down:
+            y -= 16;
+            break;
+        default:
+            break;
+    }
+    getWorld()->getActorList().push_back(new Vortex(IID_VORTEX, x, y, getWorld()));
+}
 /* =========== BADDIE =========== */
 void Baddie::doSomething(Baddie &b){
+    if(m_gotHitByVortex == true){
+        teleport(*this);
+        m_gotHitByVortex = false;
+    }
     if(b.getIsWalking() == false){
         for(int i = 1; i < getWorld()->getNumPlayers()+1; i++){
             Player* player = getWorld()->getPlayer(i);
@@ -264,7 +296,7 @@ void Bowser::hurtPlayer(Player &player){
 }
 
 void Bowser::specialMove(){
-    int chance = randInt(1, 1);
+    int chance = randInt(1, 4);
     if(chance == 1){
         getWorld()->addDroppingSquare(getX(), getY());
         getWorld()->playSound(SOUND_DROPPING_SQUARE_CREATED);
@@ -300,6 +332,20 @@ void Boo::doSomething(){
     Baddie::doSomething(*this);
 }
 
+/* =========== VORTEX =========== */
+void Vortex::doSomething(){
+    if(!isActive()){
+        return;
+    }
+    moveAtAngle(getWalkDir(), 2);
+    if(getX() > VIEW_WIDTH || getX() < 0 || getY() > BOARD_HEIGHT || getY() < 0){
+        setDead();
+    }
+    if(getWorld()->hitWithVortex(getX(), getY()) == true){
+        setDead();
+        getWorld()->playSound(SOUND_HIT_BY_VORTEX);
+    }
+}
 /* =========== SQUARE =========== */
 void Square::doSomething(Square &a){
     if(!a.isActive()){
@@ -377,8 +423,7 @@ DirectionalSquare::DirectionalSquare(int imageID, int startX, int startY, int di
         default:
             break;
     }
-};
-
+}
 void DirectionalSquare::doAction(Player &p) {
     p.setWalkDir(m_forceDir);
     if(m_forceDir == left){
@@ -387,7 +432,7 @@ void DirectionalSquare::doAction(Player &p) {
     else{
         p.setDirection(right);
     }
-};
+}
 
 void DirectionalSquare::doSomething(){
     Square::doSomething(*this);

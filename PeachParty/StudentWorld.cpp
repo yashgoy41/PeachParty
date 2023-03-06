@@ -154,3 +154,17 @@ void StudentWorld::addDroppingSquare(int x, int y){
     }
     return;
 }
+
+bool StudentWorld::hitWithVortex(int x, int y){
+    for (std::list<Actor*>::iterator it = actorList.begin(); it != actorList.end(); it++) {
+        if((*it)->isActive()){
+            if((*it)->canBeHitByVortex()){
+                if((*it)->getX() == x && (*it)->getY() == y){
+                    (*it)->gotHitByVortex();
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}

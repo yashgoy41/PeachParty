@@ -48,6 +48,10 @@ public:
         m_totalBankCoins = 0;
     }
     void addDroppingSquare(int x, int y);
+    bool hitWithVortex(int x, int y);
+    std::list<Actor*> getActorList(){
+        return actorList;
+    }
 
 private:
     std::list<Actor*> actorList;

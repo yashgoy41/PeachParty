@@ -3,7 +3,7 @@
 
 #include "GraphObject.h"
 #include "StudentWorld.h"
-
+/* =========== ACTOR =========== */
 class Actor: public GraphObject {
 public:
     Actor(int imageID, int startX, int startY, int dir, int depth, double size, StudentWorld* world) : GraphObject(imageID, startX, startY, dir, depth, size){
@@ -28,13 +28,17 @@ public:
         return m_active;
     }
     bool overlaps(const Actor &a) const;
+    bool partiallyOverlaps(const Actor &a) const;
     virtual bool isASquare() const = 0;
+    virtual bool canBeHitByVortex() const = 0;
+    virtual void gotHitByVortex(){return;};
 private:
     StudentWorld* m_world;
     bool m_active;
 
 };
 
+/* =========== MOVING ACTOR =========== */
 class MovingActor: public Actor{
 public:
     MovingActor(int imageID, int startX, int startY, StudentWorld* world)
@@ -46,6 +50,7 @@ public:
     }
     virtual ~MovingActor(){};
     virtual bool isASquare() const {return false;};
+    virtual bool canBeHitByVortex() const {return false;}
     virtual void doSomething() = 0;
     int getWalkDir() const{
         return m_walkDir;
@@ -87,12 +92,15 @@ private:
     bool m_justLanded;
 };
 
+/* =========== PLAYER =========== */
 class Player : public MovingActor {
 public:
     Player(int imageID, int playerNumber, int startX, int startY, StudentWorld* world);
     virtual ~Player(){}
     virtual bool isASquare() const {return false;};
     virtual void doSomething();
+    virtual bool canBeHitByVortex() const {return false;}
+    void createVortex(int dir);
     void resetCoins(){
         m_coins = 0;
     }
@@ -151,20 +159,22 @@ private:
     bool m_hurtByBaddie;
 };
 
+/* =========== BADDIE =========== */
 class Baddie: public MovingActor{
 public:
     Baddie(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){
         m_travelDist = 0;
         m_pauseCtr = 180;
+        m_gotHitByVortex = false;
     }
     virtual ~Baddie(){}
     virtual bool isASquare() const {return false;};
+    virtual bool canBeHitByVortex() const {return true;}
+    virtual void gotHitByVortex(){m_gotHitByVortex = true;};
     virtual void doSomething(Baddie &b);
     virtual void hurtPlayer(Player &a) = 0;
     virtual void specialMove() = 0;
-    int getPauseCtr(){
-        return m_pauseCtr;
-    }
+    int getPauseCtr(){return m_pauseCtr;}
     void resetPauseCtr(){
         m_pauseCtr = 180;
     }
@@ -174,8 +184,10 @@ public:
 private:
     int m_travelDist;
     int m_pauseCtr;
+    int m_gotHitByVortex;
 };
 
+/* =========== BOWSER =========== */
 class Bowser: public Baddie { // or some subclass of Actor
 public:
     Bowser(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
@@ -184,9 +196,11 @@ public:
     virtual void doSomething();
     virtual void specialMove();
     virtual void hurtPlayer(Player &a);
+    
 private:
 };
 
+/* =========== BOO =========== */
 class Boo: public Baddie { // or some subclass of Actor
 public:
     Boo(int imageID, int startX, int startY, StudentWorld* world): Baddie(imageID, startX, startY, world){};
@@ -198,16 +212,17 @@ public:
 private:
 };
 
-// Might have to make this another dericed class
+/* =========== VORTEX =========== */
 class Vortex: public MovingActor { // or some subclass of Actor
 public:
     Vortex(int imageID, int startX, int startY, StudentWorld* world): MovingActor(imageID, startX, startY, world){};
     virtual ~Vortex(){};
     virtual bool isASquare() const {return false;};
-    virtual void doSomething() {return;}
+    virtual void doSomething();
 private:
 };
 
+/* =========== SQUARE =========== */
 class Square: public Actor{
 public:
     Square(int imageID, int startX, int startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, 1.0, world){
@@ -216,9 +231,11 @@ public:
     virtual void doSomething(Square &p);
     virtual void doAction(Player &p) = 0;
     virtual bool isASquare() const {return true;};
+    virtual bool canBeHitByVortex() const {return false;};
 private:
 };
  
+/* =========== COIN SQUARE =========== */
 class CoinSquare: public Square {// or some subclass of Actor
 public:
     CoinSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins): Square(imageID, startX, startY, world){
@@ -231,6 +248,7 @@ private:
     int m_numCoinsModified;
 };
 
+/* =========== STAR SQUARE =========== */
 class StarSquare: public Square {// or some subclass of Actor
 public:
     StarSquare(int imageID, int startX, int startY, StudentWorld* world, int numCoins, int numStars): Square(imageID, startX, startY, world){
@@ -245,6 +263,7 @@ private:
     int m_numStarsToGive;
 };
 
+/* =========== DIRECTIONAL SQUARE =========== */
 class DirectionalSquare: public Square {// or some subclass of Actor
 public:
     DirectionalSquare(int imageID, int startX, int startY, int dir, StudentWorld* world);
@@ -255,6 +274,7 @@ private:
     int m_forceDir;
 };
 
+/* =========== BANK SQUARE =========== */
 class BankSquare: public Square {// or some subclass of Actor
 public:
     BankSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
@@ -265,6 +285,7 @@ private:
 //    int num_
 };
 
+/* =========== EVENT SQUARE =========== */
 class EventSquare: public Square {// or some subclass of Actor
 public:
     EventSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
@@ -274,6 +295,7 @@ public:
 private:
 };
 
+/* =========== DROPPING SQUARE =========== */
 class DroppingSquare: public Square {// or some subclass of Actor
 public:
     DroppingSquare(int imageID, int startX, int startY, StudentWorld* world): Square(imageID, startX, startY, world){};
