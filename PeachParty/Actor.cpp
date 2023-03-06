@@ -163,7 +163,7 @@ Player::Player(int imageID, int playerNumber, int startX, int startY, StudentWor
     m_playerNumber = playerNumber;
     m_stars = 0;
     m_coins = 0;
-    m_vortex = true;
+    m_vortex = false;
     m_hurtByBaddie = false;
     world->addPlayers();
     setWalkDir(right);
